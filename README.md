@@ -1,187 +1,131 @@
+# Campaign Optimization Engine (Go)
 
-# 📈 Next-Gen Multi-Platform Campaign Optimization Engine
+A real-time multi-platform bid optimization system with predictive analytics, built in Go.
 
-## Objective
+## Features
 
-Design and implement a high-performance **Campaign Optimization Engine** that:
+- Real-time bid processing with Kafka
+- Predictive CPC/CVR analytics using lightweight ML
+- Concurrent decision engine with goroutines
+- Redis caching for low-latency bid decisions
+- PostgreSQL for persistent storage
+- Monitoring with Prometheus + Grafana
 
-- Dynamically allocates ad campaigns across multiple platforms.
-- Integrates real-time predictive analytics for bid optimization.
-- Handles multi-threaded data processing with concurrency.
-- Leverages distributed systems for scalability.
-- Ensures fault tolerance and data consistency under high-load conditions.
+## Architecture
+┌─────────────────────────────────────────────────┐
+│ Go Application │
+│ │
+│ ┌─────────────┐ ┌─────────────┐ │
+│ │ Kafka │ │ Predictive │ │
+│ │ Consumer │◄──►│ Analytics │ │
+│ └─────────────┘ └─────────────┘ │
+│ | | │
+│ v v │
+│ ┌─────────────┐ ┌───────────────────┐ │
+│ │ Redis │ │ Decision Engine │ │
+│ │ (Cache) │ │ (goroutines) │ │
+│ └─────────────┘ └───────────────────┘ │
+│ | | │
+│ v v │
+│ ┌─────────────┐ ┌───────────────────┐ │
+│ │ PostgreSQL │ │ Prometheus │ │
+│ │ (Storage) │ │ Metrics │ │
+│ └─────────────┘ └───────────────────┘ │
+└─────────────────────────────────────────────────┘
+|
+v
+┌─────────────┐
+│ Grafana │
+│ Dashboard │
+└─────────────┘
 
----
 
-## 🔧 Core Functional Requirements
-
-### ✅ Real-Time Bidding & Predictive Analytics
-- Simulates active campaigns with budgets, reach goals, and conversion targets.
-- Feeds real-time CPC (Cost Per Click) and CVR (Conversion Rate) metrics.
-- Lightweight predictive analytics (e.g., linear regression) forecasts short-term trends.
-
-### 🧠 Decision Engine
-- Determines:
-  - **When to bid** (timing)
-  - **Where to bid** (best platform)
-  - **How much to bid** (ROI optimization)
-- Balances:
-  - Budget limits
-  - Conversion maximization
-  - Waste minimization (Pareto optimization)
-
-### 🚀 Multi-Threaded & Distributed Architecture
-- Each campaign's bid logic runs in a **separate Goroutine**.
-- Scalable, distributed design with low-latency, real-time updates.
-- Optional: Queueing via Kafka/NATS for microservices or node coordination.
-
-### 📊 Real-Time Analytics & Monitoring
-- Sliding window + linear regression for CPC/CVR prediction.
-- Optional dashboard to monitor:
-  - Campaign states
-  - Live bidding decisions
-  - System load and node health
-
----
-
-## 🏗️ Architecture Overview
-
-```
-+----------------+       +----------------------+      +----------------------+
-|  Campaign Data +<----->+   Campaign Manager   +<---->+   Bid Scheduler      |
-+----------------+       +----------+-----------+      +----+-----------------+
-                                  ^                          |
-                                  |                          v
-                         +--------+--------+        +---------------------+
-                         | Analytics Engine |<------+ Platform Metrics     |
-                         | (Sliding Window) |        | Feed (Simulated)    |
-                         +--------+--------+        +---------------------+
-                                  |
-                                  v
-                         +--------+--------+
-                         | Decision Engine |
-                         +--------+--------+
-                                  |
-                                  v
-                        +----------------------+
-                        | Output Queue / Logger|
-                        +----------------------+
-```
-
----
-
-## 📂 Project Structure
-
-```
-campaign-engine/
+## Project Structure
+campaign-optimization-engine/
 ├── cmd/
-│   └── main.go                  # Entry point
-├── modules/
-│   ├── analytics/               # Predictive model (sliding window, regression)
-│   ├── engine/                  # Decision-making logic (ROI, bidding)
-│   ├── manager/                 # Campaign state management
-│   ├── metrics/                 # CPC/CVR simulation or ingestion
-│   ├── scheduler/               # Periodic bidding evaluator
-│   └── shared/                  # Data models, constants, utils
-├── pkg/
-│   └── logger/                  # Centralized logging abstraction
-├── test/
-│   └── benchmark/               # Load testing & concurrency validation
-└── go.mod
-```
+│ ├── api/ # REST API (optional)
+│ │ └── main.go
+│ ├── engine/ # Decision engine
+│ │ └── main.go
+│ └── kafka-consumer/ # Real-time bid processor
+│ └── main.go
+├── internal/
+│ ├── analytics/ # Predictive models
+│ │ └── predictor.go
+│ ├── db/ # Database clients
+│ │ ├── postgres.go
+│ │ └── redis.go
+│ ├── models/ # Data structures
+│ │ ├── bid.go
+│ │ └── campaign.go
+│ └── utils/ # Helpers
+│ └── logger.go
+├── configs/ # Config files
+│ ├── kafka.yaml
+│ └── app.yaml
+├── scripts/ # Setup scripts
+│ ├── init_db.sql # PostgreSQL schema
+│ └── prometheus.yml # Prometheus config
+├── docker-compose.yml # Kafka + Redis + Postgres
+├── Makefile # Build/run commands
+└── README.md
 
----
 
-## ⚙️ Concurrency & Distribution
+## Prerequisites
 
-- Goroutines handle each campaign independently.
-- Mutexes and thread-safe maps ensure safe concurrent access.
-- (Optional) Distributed nodes communicate via message queues.
-- Eventual consistency models supported for high-load resilience.
+- Go 1.20+
+- Docker
+- Docker Compose
 
----
+## Quick Start
 
-## 📈 Predictive Analytics Module
+1. **Start dependencies**:
+   ```bash
+   docker-compose up -d
+Build and run:
 
-- Sliding window stores historical CPC/CVR metrics per platform.
-- Linear regression fits trend lines to forecast short-term fluctuations.
-- Cached predictions reduce compute overhead during decision cycles.
+bash
+make run-consumer    # Starts Kafka consumer
+make run-engine      # Starts decision engine
+Generate test data:
 
----
+bash
+go run scripts/generate_bids.go
+Access monitoring:
 
-## 🚦 Decision Engine Logic
+Prometheus: http://localhost:9090
 
-- Computes **ROI** = (Predicted CVR × Conversion Value − CPC)
-- Picks:
-  - Highest ROI platform within budget
-  - Optimal bid (based on predicted performance)
-- Applies fallback strategy if all options are suboptimal
+Grafana: http://localhost:3000 (admin/admin)
 
----
+Configuration
+Edit configs/app.yaml for application settings:
 
-## 🔄 Scheduler
+yaml
+kafka:
+  brokers: ["localhost:9092"]
+  topic: "bid-events"
 
-- Periodically triggers bidding logic (e.g., every 2s)
-- Evaluates each campaign in parallel
-- Logs decisions with timestamp and performance metrics
+redis:
+  addr: "localhost:6379"
 
----
+postgres:
+  dsn: "host=localhost user=postgres dbname=campaigns sslmode=disable"
+Monitoring
+The application exposes Prometheus metrics at :2112/metrics. A pre-configured Grafana dashboard is available in scripts/grafana_dashboard.json.
 
-## 🛡️ Fault Tolerance & Scalability
+API Endpoints (Optional)
+If using the API component:
 
-- Safe concurrent data access using Go's primitives
-- Graceful degradation using fallback strategies and error logging
-- Horizontally scalable via microservices or worker queues
-- Benchmarking tools to simulate high-load scenarios
+GET  /campaigns      - List all campaigns
+POST /campaigns      - Create new campaign
+GET  /metrics        - Prometheus metrics
+Testing
+Run unit tests:
 
----
+bash
+make test
+Cleanup
+Stop all services:
 
-## 📊 Dashboard & Monitoring (Optional)
-
-- Live display of:
-  - Campaigns and bids
-  - ROI trends
-  - Node load
-  - System health
-- Metrics can be exported to Prometheus/Grafana or a web UI
-
----
-
-## 🧪 Testing & Benchmarks
-
-- Unit tests for all major modules
-- Benchmark tests to simulate 1000s of concurrent campaigns
-- Latency, throughput, and memory metrics included
-
----
-
-## 🚀 How to Run
-
-```bash
-go run cmd/main.go
-```
-
-Customize bid intervals, platform metrics, and campaign data in respective modules.
-
----
-
-## ✅ Status
-
-- [x] Predictive Analytics (sliding window + regression)
-- [x] Decision Engine
-- [x] Periodic Bid Scheduler
-- [ ] Distributed Queue Integration
-- [ ] Real-Time Dashboard
-- [ ] Load Testing Scripts
-
----
-
-## 📬 Contributing
-
-PRs are welcome! Feel free to raise issues or enhancements under the GitHub repo.
-
----
-
-## 📄 License
-
-MIT License
+bash
+docker-compose down
