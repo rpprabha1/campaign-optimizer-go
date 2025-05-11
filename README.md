@@ -1,3 +1,4 @@
+
 # Campaign Optimization Engine (Go)
 
 A real-time multi-platform bid optimization system with predictive analytics, built in Go.
@@ -82,25 +83,27 @@ campaign-optimization-engine/
 1. **Start dependencies**:
    ```bash
    docker-compose up -d
-Build and run:
+   ```
 
-bash
-make run-consumer    # Starts Kafka consumer
-make run-engine      # Starts decision engine
-Generate test data:
+2. **Build and run**:
+   ```bash
+   make run-consumer    # Starts Kafka consumer
+   make run-engine      # Starts decision engine
+   ```
 
-bash
-go run scripts/generate_bids.go
-Access monitoring:
+3. **Generate test data**:
+   ```bash
+   go run scripts/generate_bids.go
+   ```
 
-Prometheus: http://localhost:9090
+4. **Access monitoring**:
+   - Prometheus: http://localhost:9090
+   - Grafana: http://localhost:3000 (admin/admin)
 
-Grafana: http://localhost:3000 (admin/admin)
+## Configuration
+Edit `configs/app.yaml` for application settings:
 
-Configuration
-Edit configs/app.yaml for application settings:
-
-yaml
+```yaml
 kafka:
   brokers: ["localhost:9092"]
   topic: "bid-events"
@@ -110,22 +113,28 @@ redis:
 
 postgres:
   dsn: "host=localhost user=postgres dbname=campaigns sslmode=disable"
-Monitoring
-The application exposes Prometheus metrics at :2112/metrics. A pre-configured Grafana dashboard is available in scripts/grafana_dashboard.json.
+```
 
-API Endpoints (Optional)
+## Monitoring
+The application exposes Prometheus metrics at `:2112/metrics`. A pre-configured Grafana dashboard is available in `scripts/grafana_dashboard.json`.
+
+## API Endpoints (Optional)
 If using the API component:
 
-GET  /campaigns      - List all campaigns
-POST /campaigns      - Create new campaign
-GET  /metrics        - Prometheus metrics
-Testing
+- `GET  /campaigns`      - List all campaigns
+- `POST /campaigns`      - Create new campaign
+- `GET  /metrics`        - Prometheus metrics
+
+## Testing
 Run unit tests:
 
-bash
+```bash
 make test
-Cleanup
+```
+
+## Cleanup
 Stop all services:
 
-bash
+```bash
 docker-compose down
+```
