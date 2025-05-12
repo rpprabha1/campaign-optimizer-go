@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+// Responsibilities:
+// - Lightweight ML model (linear regression)
+// - Trend analysis using Redis bid history
+// - Bid amount calculation
+
 type Predictor struct {
 	model *LinearModel
 }

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -9,6 +10,7 @@ import (
 )
 
 var (
+	// Metrics definitions
 	BidsProcessed = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "campaign_bids_processed_total",
 		Help: "Total number of bids processed",
@@ -21,13 +23,32 @@ var (
 		},
 		[]string{"platform", "decision"},
 	)
+
+	// Server management
+	metricsServer     *http.Server
+	metricsServerOnce sync.Once
 )
 
-func StartMetricsServer() {
-	http.Handle("/metrics", promhttp.Handler())
-	go func() {
-		if err := http.ListenAndServe(":2112", nil); err != nil {
-			panic(err)
+func StartMetricsServer(port string) {
+	metricsServerOnce.Do(func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+
+		metricsServer = &http.Server{
+			Addr:    ":" + port,
+			Handler: mux,
 		}
-	}()
+
+		go func() {
+			if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				panic(err)
+			}
+		}()
+	})
+}
+
+func StopMetricsServer() {
+	if metricsServer != nil {
+		metricsServer.Close()
+	}
 }

@@ -1,0 +1,15 @@
+{
+    "coefficients": {
+      "google": 1.85,
+      "meta": 2.10,
+      "tiktok": 1.45,
+      "twitter": 1.30,
+      "default": 1.75
+    },
+    "intercept": 0.25,
+    "metadata": {
+      "trained_at": "2023-11-15T08:30:00Z",
+      "training_r2_score": 0.92,
+      "features_used": ["platform", "hour_of_day", "previous_cvr"]
+    }
+  }

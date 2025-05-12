@@ -13,9 +13,14 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// Responsibilities:
+// - Consume bid events from Kafka
+// - Store raw bids in Redis with TTL
+// - Track processing metrics
 func main() {
-	// Add at the beginning of main()
-	utils.StartMetricsServer()
+	// Add this at the beginning of main()
+	utils.StartMetricsServer("2112") // Primary metrics port
+	defer utils.StopMetricsServer()
 	// Initialize components
 	logger := utils.NewLogger()
 	redis := db.NewRedisClient()

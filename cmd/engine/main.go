@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+// Responsibilities:
+// - Fetch active campaigns from PostgreSQL
+// - Retrieve recent bids from Redis (50-100 most recent)
+// - Apply predictive models
+// - Make bid decisions
 func main() {
 	logger := utils.NewLogger()
 	pg := db.NewPostgresClient()
@@ -24,7 +29,9 @@ func main() {
 		logger.Fatalf("Failed to load model: %v", err)
 	}
 
-	utils.StartMetricsServer()
+	// Add this at the beginning of main()
+	utils.StartMetricsServer("2113") // Different port for engine
+	defer utils.StopMetricsServer()
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
