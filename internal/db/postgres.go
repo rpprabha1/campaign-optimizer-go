@@ -15,7 +15,7 @@ type PostgresClient struct {
 }
 
 func NewPostgresClient() *PostgresClient {
-	connStr := "host=localhost user=postgres dbname=campaigns sslmode=disable"
+	connStr := "host=localhost user=postgres password=postgres dbname=campaigns sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
