@@ -1,38 +1,24 @@
-# Build stage
-FROM golang:1.21-alpine AS builder
+# Stage 1: Build
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
-RUN apk add --no-cache git make
+# Install Git for private module access
+RUN apk add --no-cache git
 
-# Copy go mod files
+# Copy go.mod and go.sum first
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source code
+# Copy the entire source code
 COPY . .
 
-# Build the application
-RUN make build
+# Use build arg to specify which service to build
+ARG SERVICE_PATH
+RUN go build -o main ${SERVICE_PATH}
 
-# Runtime stage
-FROM alpine:3.18
-
+# Stage 2: Runtime
+FROM alpine:latest
 WORKDIR /app
-
-# Install Kafka tools for health checks
-RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community \
-    kafka=3.5.1-r0
-
-# Copy built binary
-COPY --from=builder /app/bin/campaign-optimizer .
-
-# Copy wait-for script
-COPY scripts/wait-for.sh /wait-for.sh
-RUN chmod +x /wait-for.sh
-
-# Copy configuration files
-COPY configs/ /app/configs/
-
-CMD ["/app/campaign-optimizer"]
+COPY --from=builder /app/main .
+ENTRYPOINT ["./main"]

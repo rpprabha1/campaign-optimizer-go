@@ -21,6 +21,8 @@ import (
 // - Track processing metrics
 
 func main() {
+	logger := utils.NewLogger("kafka-consumer")
+	defer utils.RecoverAndLogPanic(logger)
 	// Set up Kafka reader config
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   []string{"localhost:9092"},
@@ -34,7 +36,6 @@ func main() {
 	defer reader.Close()
 
 	// Initialize components
-	logger := utils.NewLogger()
 	redis := db.NewRedisClient()
 	//Signal to exit gracefully
 	sigchan := make(chan os.Signal, 1)

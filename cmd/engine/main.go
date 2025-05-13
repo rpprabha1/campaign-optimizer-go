@@ -19,7 +19,10 @@ import (
 // - Apply predictive models
 // - Make bid decisions
 func main() {
-	logger := utils.NewLogger()
+	logger := utils.NewLogger("engine")
+	defer utils.RecoverAndLogPanic(logger)
+
+	//Initialize objects
 	pg := db.NewPostgresClient()
 	redisClient := db.NewRedisClient()
 	defer pg.Close()

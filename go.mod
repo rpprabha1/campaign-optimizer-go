@@ -7,6 +7,7 @@ require (
 	github.com/lib/pq v1.10.9
 	github.com/prometheus/client_golang v1.22.0
 	github.com/segmentio/kafka-go v0.4.47
+	github.com/sirupsen/logrus v1.9.3
 )
 
 require (

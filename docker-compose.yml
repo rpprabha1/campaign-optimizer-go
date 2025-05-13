@@ -64,6 +64,33 @@ services:
     depends_on:
       - prometheus
 
+  engine:
+    build:
+      context: ./cmd/engine
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - prometheus
+
+  kafka-consumer:
+    build:
+      context: ./cmd/kafka-consumer
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+      - prometheus
+      - kafka
+
+  generate_bids:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - redis
+
 volumes:
   redis_data:
   postgres_data:

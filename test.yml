@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: ./cmd/engine/main.go
+    # depends_on:
+    #   - postgres
+    #   - redis
+    #   - prometheus

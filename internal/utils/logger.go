@@ -1,24 +1,34 @@
 package utils
 
 import (
-	"log"
+	"io"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
-type Logger struct {
-	*log.Logger
-}
-
-func NewLogger() *Logger {
-	return &Logger{
-		Logger: log.New(os.Stdout, "[CAMPAIGN] ", log.LstdFlags|log.Lshortfile),
+func NewLogger(serviceName string) *logrus.Logger {
+	// Create log file with timestamp-based naming
+	logFileName := serviceName +  ".log"
+	file, err := os.OpenFile(logFileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		panic("Unable to open log file: " + err.Error())
 	}
-}
 
-func (l *Logger) Errorf(format string, v ...interface{}) {
-	l.Printf("ERROR: "+format, v...)
-}
+	logger := logrus.New()
 
-func (l *Logger) Infof(format string, v ...interface{}) {
-	l.Printf("INFO: "+format, v...)
+	// Output to both file and stdout
+	multiWriter := io.MultiWriter(os.Stdout, file)
+	logger.SetOutput(multiWriter)
+
+	// Log format
+	logger.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: true,
+		TimestampFormat: "2006-01-02 15:04:05",
+	})
+
+	// Minimum level to log
+	logger.SetLevel(logrus.InfoLevel)
+
+	return logger
 }
