@@ -26,7 +26,7 @@ func NewPredictor() *Predictor {
 }
 
 func (p *Predictor) LoadModel() error {
-	data, err := os.ReadFile("model.json")
+	data, err := os.ReadFile("/home/rprabaka/campaign-optimizer-go/internal/analytics/model.json")
 	if err != nil {
 		return err
 	}

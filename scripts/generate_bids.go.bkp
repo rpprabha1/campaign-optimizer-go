@@ -5,21 +5,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
 	"github.com/segmentio/kafka-go"
 )
 
-// This simulates the sample bidEvents for each event for every 500millisecond
 func main() {
-	writer := kafka.NewWriter(kafka.WriterConfig{
+	w := kafka.NewWriter(kafka.WriterConfig{
 		Brokers: []string{"localhost:9092"},
-		Topic:   "test-topic",
+		Topic:   "bid-events",
 	})
-
-	defer writer.Close()
 
 	platforms := []string{"google", "meta", "tiktok", "twitter"}
 
@@ -33,22 +29,15 @@ func main() {
 		}
 
 		value, _ := json.Marshal(bid)
-		err := writer.WriteMessages(context.Background(),
+		err := w.WriteMessages(context.Background(),
 			kafka.Message{
 				Value: value,
 			},
 		)
 		if err != nil {
-			// Handle specific error
-			if err.Error() == "kafka server: Unknown Topic or Partition" {
-				log.Printf("Kafka error: topic or partition not found: %v", err)
-				// optionally: retry logic, topic creation, etc.
-			} else {
-				log.Printf("Kafka write failed: %v", err)
-			}
+			panic(err)
 		}
 
 		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
 	}
-
 }

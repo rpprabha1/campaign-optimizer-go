@@ -5,7 +5,6 @@ import (
 	"campaign-optimization/internal/db"
 	"campaign-optimization/internal/models"
 	"campaign-optimization/internal/utils"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -25,17 +24,18 @@ func main() {
 	defer pg.Close()
 	defer redisClient.Close()
 
-	// Predictor has the uses ML operations to give the optimized bid
 	predictor := analytics.NewPredictor()
 	if err := predictor.LoadModel(); err != nil {
 		logger.Fatalf("Failed to load model: %v", err)
 	}
 
-	// Handle exits
+	// Add this at the beginning of main()
+	utils.StartMetricsServer("2113") // Different port for engine
+	defer utils.StopMetricsServer()
+
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Make decision every 30 seconds with the bidEvents
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -44,7 +44,7 @@ func main() {
 	for {
 		select {
 		case <-sigchan:
-			logger.Infof("Shutting down consumer")
+			logger.Infof("Shutting down engine")
 			return
 		case <-ticker.C:
 			campaigns, err := pg.GetActiveCampaigns()
@@ -52,9 +52,8 @@ func main() {
 				logger.Errorf("Error getting campaigns: %v", err)
 				continue
 			}
-			// fmt.Println("campaigns fetched from SQL:", campaigns)
+
 			var wg sync.WaitGroup
-			// For each campaign get the bidEvents to evaluate the bid
 			for _, campaign := range campaigns {
 				wg.Add(1)
 				go func(c models.Campaign) {
@@ -66,7 +65,6 @@ func main() {
 					}
 
 					decision := predictor.EvaluateBid(c, recentBids) // Pass bids to predictor
-					fmt.Printf("decision taken for campaign ID %v is %v\n", c.ID, decision)
 					if err := pg.SaveDecision(decision); err != nil {
 						logger.Errorf("Error saving decision: %v", err)
 					}
