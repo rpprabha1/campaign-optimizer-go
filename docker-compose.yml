@@ -103,26 +103,26 @@ services:
       - prometheus
       - kafka
 
-  # engine:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     args:
-  #       SERVICE_PATH: ./cmd/engine/main.go
-  #   environment:
-  #     DB_HOST: postgres
-  #     DB_PORT: 5432
-  #     DB_USER: postgres
-  #     DB_PASSWORD: postgres
-  #     DB_NAME: campaigns
-  #     REDIS_ADDR: redis:6379
-  #   volumes:
-  #     - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #     - prometheus
-  #     - kafka
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVICE_PATH: ./cmd/engine/main.go
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: campaigns
+      REDIS_ADDR: redis:6379
+    volumes:
+      - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
+    depends_on:
+      - postgres
+      - redis
+      - prometheus
+      - kafka
   
 volumes:
   redis_data:

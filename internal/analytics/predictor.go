@@ -3,7 +3,6 @@ package analytics
 import (
 	"campaign-optimization/internal/models"
 	"encoding/json"
-	"os"
 	"time"
 )
 
@@ -26,13 +25,25 @@ func NewPredictor() *Predictor {
 }
 
 func (p *Predictor) LoadModel() error {
-	data, err := os.ReadFile("../../internal/analytics/model.json")
-	if err != nil {
-		return err
-	}
+	rawJSON := `
+	{
+    "coefficients": {
+      "google": 1.85,
+      "meta": 2.10,
+      "tiktok": 1.45,
+      "twitter": 1.30,
+      "default": 1.75
+    },
+    "intercept": 0.25,
+    "metadata": {
+      "trained_at": "2023-11-15T08:30:00Z",
+      "training_r2_score": 0.92,
+      "features_used": ["platform", "hour_of_day", "previous_cvr"]
+    }
+  }`
 
 	var model LinearModel
-	if err := json.Unmarshal(data, &model); err != nil {
+	if err := json.Unmarshal([]byte(rawJSON), &model); err != nil {
 		return err
 	}
 
