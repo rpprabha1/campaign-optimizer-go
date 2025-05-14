@@ -20,7 +20,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092 
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
@@ -38,6 +38,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: campaigns
+      POSTGRES_HOST: postgres
     ports:
       - "5432:5432"
     volumes:
@@ -64,33 +65,65 @@ services:
     depends_on:
       - prometheus
 
-  engine:
-    build:
-      context: ./cmd/engine
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - prometheus
+  # generate_bids:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     args:
+  #       SERVICE_PATH: ./scripts/generate_bids.go
+  #   environment:
+  #     KAFKA_HOST: kafka:9092
+  #     KAFKA_TOPIC: my_topic
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - prometheus
+  #     - kafka
 
-  kafka-consumer:
-    build:
-      context: ./cmd/kafka-consumer
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - prometheus
-      - kafka
+  # kafka-consumer:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     args:
+  #       SERVICE_PATH: ./cmd/kafka-consumer/main.go
+  #   environment:
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USER: postgres
+  #     DB_PASSWORD: postgres
+  #     DB_NAME: campaigns
+  #     REDIS_ADDR: redis:6379
+  #     KAFKA_HOST: kafka:9092
+  #     KAFKA_TOPIC: my_topic
+  #   volumes:
+  #     - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - prometheus
+  #     - kafka
 
-  generate_bids:
-    build:
-      context: ./scripts
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-
+  # engine:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #     args:
+  #       SERVICE_PATH: ./cmd/engine/main.go
+  #   environment:
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USER: postgres
+  #     DB_PASSWORD: postgres
+  #     DB_NAME: campaigns
+  #     REDIS_ADDR: redis:6379
+  #   volumes:
+  #     - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - prometheus
+  #     - kafka
+  
 volumes:
   redis_data:
   postgres_data:
