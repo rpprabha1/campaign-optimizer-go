@@ -19,14 +19,14 @@ A real-time multi-platform bid optimization system with predictive analytics, bu
 │                            Go Application                         │
 │                                                                    │
 │   ┌──────────────┐    ┌─────────────────────┐                      │
-│   │ Kafka        │    │ Predictive Analytics│                      │
-│   │ Consumer     ├────►     Module          │                      │
+│   │ Kafka        │    │ Decision Engine     │                      │
+│   │ Consumer     ├────►Concurrent Goroutines│                      │
 │   └──────────────┘    └─────────────────────┘                      │
 │           │                          │                             │
 │           ▼                          ▼                             │
 │   ┌──────────────┐       ┌────────────────────────┐                │
-│   │ Redis Cache  │       │ Decision Engine        │                │
-│   └──────────────┘       │ (Concurrent Goroutines)│                │
+│   │ Redis Cache  │       │ Predictive Analytics   │                │
+│   └──────────────┘       │ (Module)               │                │
 │           │              └────────────────────────┘                │
 │           ▼                          ▼                             │
 │   ┌──────────────┐       ┌──────────────────────┐                  │
@@ -120,16 +120,10 @@ postgres:
 
 ## Monitoring
 
-The application exposes Prometheus metrics at `:2112/metrics`.  
-A pre-configured Grafana dashboard is available in `scripts/grafana_dashboard.json`.
-
-## API Endpoints (Optional)
-
-If using the API component:
-
-- `GET  /campaigns`      - List all campaigns
-- `POST /campaigns`      - Create new campaign
-- `GET  /metrics`        - Prometheus metrics
+The application exposes Prometheus metrics for kafka-consumer at `:2112/metrics`.  
+The application exposes Prometheus metrics for decision engine at `:2113/metrics`.  
+A Graphana dashboard has been integrated and can be viewed at `:3000`
+Use login credentials username: admin, password: admin for grafana.
 
 ## Testing
 
@@ -145,4 +139,5 @@ Stop all services:
 
 ```bash
 docker-compose down
+./clear_docker_images.sh
 ```
