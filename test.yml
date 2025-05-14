@@ -1,16 +1,23 @@
 version: "3.8"
 
 services:
-  generate_bids:
+  engine:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        SERVICE_PATH: ./scripts/generate_bids.go
+        SERVICE_PATH: ./cmd/engine/main.go
     environment:
-      KAFKA_HOST: kafka:9092
-      KAFKA_TOPIC: my_topic
-
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: campaigns
+      REDIS_ADDR: redis:6379
+    volumes:
+      - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
+ 
+    
   # kafka-consumer:
   #   build:
   #     context: .

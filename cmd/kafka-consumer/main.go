@@ -23,10 +23,14 @@ import (
 func main() {
 	logger := utils.NewLogger("kafka-consumer")
 	defer utils.RecoverAndLogPanic(logger)
+
+	// Set up Kafka reader config
+	kafkaHost := os.Getenv("KAFKA_HOST")
+	kafkaTopic := os.Getenv("KAFKA_TOPIC")
 	// Set up Kafka reader config
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   []string{"localhost:9092"},
-		Topic:     "test-topic",
+		Brokers:   []string{kafkaHost},
+		Topic:    kafkaTopic,
 		GroupID:   "my-group",
 		Partition: 0,
 		MinBytes:  10e3, // 10KB

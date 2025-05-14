@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -15,7 +16,21 @@ type PostgresClient struct {
 }
 
 func NewPostgresClient() *PostgresClient {
-	connStr := "host=localhost user=postgres password=postgres dbname=campaigns sslmode=disable"
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	if host == "" || port == "" || user == "" || password == "" || dbname == "" {
+		panic("One or more required database environment variables are not set")
+	}
+
+	connStr := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbname,
+	)
+
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"sort"
 	"time"
+	"os"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -15,8 +16,11 @@ type RedisClient struct {
 }
 
 func NewRedisClient() *RedisClient {
+	// Set up config
+	addr := os.Getenv("REDIS_ADDR")
+
 	client := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6380",
+		Addr:     addr,
 		Password: "",
 		DB:       0,
 	})
