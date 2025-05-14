@@ -5,40 +5,49 @@ import (
 	"campaign-optimization/internal/db"
 	"campaign-optimization/internal/models"
 	"campaign-optimization/internal/utils"
-	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// Responsibilities:
-// - Fetch active campaigns from PostgreSQL
-// - Retrieve recent bids from Redis (50-100 most recent)
-// - Apply predictive models
-// - Make bid decisions
 func main() {
 	logger := utils.NewLogger("engine")
 	defer utils.RecoverAndLogPanic(logger)
 
-	//Initialize objects
+	// Initialize Prometheus metrics
+	utils.InitPrometheusMetrics()
+
+	// Start HTTP server for Prometheus
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		logger.Infof("Prometheus metrics exposed at :2113/metrics")
+		if err := http.ListenAndServe(":2113", nil); err != nil {
+			logger.Fatalf("Failed to start Prometheus HTTP server: %v", err)
+		}
+	}()
+
+	// Initialize dependencies
 	pg := db.NewPostgresClient()
 	redisClient := db.NewRedisClient()
 	defer pg.Close()
 	defer redisClient.Close()
 
-	// Predictor has the uses ML operations to give the optimized bid
 	predictor := analytics.NewPredictor()
 	if err := predictor.LoadModel(); err != nil {
 		logger.Fatalf("Failed to load model: %v", err)
+		utils.ModelLoaded.Set(0)
+	} else {
+		utils.ModelLoaded.Set(1)
 	}
 
-	// Handle exits
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Make decision every 30 seconds with the bidEvents
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
@@ -47,32 +56,42 @@ func main() {
 	for {
 		select {
 		case <-sigchan:
-			logger.Infof("Shutting down consumer")
+			logger.Infof("Shutting down decision engine...")
 			return
+
 		case <-ticker.C:
 			campaigns, err := pg.GetActiveCampaigns()
 			if err != nil {
 				logger.Errorf("Error getting campaigns: %v", err)
 				continue
 			}
-			// fmt.Println("campaigns fetched from SQL:", campaigns)
+			utils.ActiveCampaigns.Set(float64(len(campaigns)))
+
 			var wg sync.WaitGroup
-			// For each campaign get the bidEvents to evaluate the bid
 			for _, campaign := range campaigns {
 				wg.Add(1)
 				go func(c models.Campaign) {
 					defer wg.Done()
-					recentBids, err := redisClient.GetRecentBids(c.ID, 50) // Get last 50 bids
+					start := time.Now()
+
+					recentBids, err := redisClient.GetRecentBids(c.ID, 50)
 					if err != nil {
-						logger.Errorf("Error getting recent bids: %v", err)
+						logger.Errorf("Error getting recent bids for campaign %s: %v", c.ID, err)
+						utils.DecisionFailures.WithLabelValues(c.ID).Inc()
 						return
 					}
 
-					decision := predictor.EvaluateBid(c, recentBids) // Pass bids to predictor
-					fmt.Printf("decision taken for campaign ID %v is %v\n", c.ID, decision)
+					decision := predictor.EvaluateBid(c, recentBids)
+					logger.Infof("Decision taken for campaign ID %v is %v\n", c.ID, decision)
+
 					if err := pg.SaveDecision(decision); err != nil {
-						logger.Errorf("Error saving decision: %v", err)
+						logger.Errorf("Error saving decision for campaign %s: %v", c.ID, err)
+						utils.DecisionFailures.WithLabelValues(c.ID).Inc()
+						return
 					}
+
+					utils.CampaignsProcessed.WithLabelValues(c.ID).Inc()
+					utils.DecisionLatency.WithLabelValues(c.ID).Observe(time.Since(start).Seconds())
 				}(campaign)
 			}
 			wg.Wait()

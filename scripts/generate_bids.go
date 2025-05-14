@@ -55,7 +55,7 @@ func main() {
 			}
 		}
 		logger.Infof("Pushed to kafka: %v", bid)
-		time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
+		time.Sleep(time.Duration(rand.Intn(2)) * time.Second)
 	}
 
 }

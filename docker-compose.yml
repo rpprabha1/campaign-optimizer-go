@@ -47,6 +47,7 @@ services:
 
   prometheus:
     image: prom/prometheus
+    container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
@@ -74,6 +75,8 @@ services:
     environment:
       KAFKA_HOST: kafka:9092
       KAFKA_TOPIC: my_topic
+    volumes:
+      - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
     depends_on:
       - postgres
       - redis
@@ -97,6 +100,8 @@ services:
       KAFKA_TOPIC: my_topic
     volumes:
       - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
+    ports:
+      - "2112:2112"
     depends_on:
       - postgres
       - redis
@@ -116,6 +121,8 @@ services:
       DB_PASSWORD: postgres
       DB_NAME: campaigns
       REDIS_ADDR: redis:6379
+    ports:
+      - "2113:2113"
     volumes:
       - /home/rprabaka/campaign-optimizer-go/logs/:/logs/
     depends_on:
